@@ -4,6 +4,20 @@
 *.exe
 *.test
 *.out
+coverage.html
+*.prof
+
+# Config local y secretos
+.env
+.env.*
+!.env.example
+*.local.json
+*.pem
+*.key
+*.crt
+token
+token.hash
+audit.log
 
 # IDE
 .vscode/
@@ -12,6 +26,8 @@
 
 # OS
 .DS_Store
+Thumbs.db
 
-# Config local de pruebas
-*.local.json
+# Backups
+*.bak
+*.backup
