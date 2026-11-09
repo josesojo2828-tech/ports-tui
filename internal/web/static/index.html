@@ -1,0 +1,732 @@
+<!DOCTYPE html>
+<html class="dark" lang="es"><head><meta charset="utf-8"/><meta content="width=device-width, initial-scale=1.0" name="viewport"/><meta name="web_dashboard" content="shell-type"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:opsz,wght,FILL,GRAD@20..48,100..700,1,0,-50..200" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com" rel="preconnect" href="https://fonts.gstatic.com" crossorigin=""/>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&amp;family=JetBrains+Mono:wght@400;500;600;700&amp;display=swap" rel="stylesheet"/>
+<title>ports-tui — control de puertos</title>
+<style>@layer base{html,body{margin:0;padding:0;}body{overscroll-behavior:none;}main>:first-child{margin-top:0!important;}main>:last-child{margin-bottom:0!important;}}::-webkit-scrollbar{width:8px;height:8px}::-webkit-scrollbar-thumb{background:#31353e;border-radius:4px}::-webkit-scrollbar-track{background:transparent}</style>
+<script src="https://cdn.tailwindcss.com"></script>
+<script id="tailwind-config">tailwind.config={darkMode:"class",theme:{extend:{colors:{"on-secondary":"#003640","surface-container":"#1c2028","on-tertiary-fixed":"#2a1700","surface-container-high":"#262a33","inverse-on-surface":"#2c3039","on-tertiary-container":"#523200","secondary":"#4cd7f6","surface-bright":"#353942","surface-tint":"#4edea3","outline":"#86948a","tertiary-container":"#e29100","on-primary":"#003824","primary":"#4edea3","on-primary-fixed-variant":"#005236","surface-container-low":"#181c24","outline-variant":"#3c4a42","on-secondary-container":"#00424e","primary-fixed-dim":"#6ffbbe","on-surface":"#dfe2ee","secondary-fixed-dim":"#acedff","on-primary-fixed":"#003824","inverse-primary":"#006c49","error":"#ffb4ab","inverse-surface":"#dfe2ee","error-container":"#93000a","on-primary-container":"#00422b","on-secondary-fixed-variant":"#004e5c","tertiary":"#ffb95f","on-secondary-fixed":"#004e5c","primary-fixed":"#6ffbbe","background":"#0f131c","on-background":"#dfe2ee","on-error":"#690005","surface-container-lowest":"#0a0e16","on-surface-variant":"#bbcabf","on-error-container":"#ffdad6","on-primary-fixed-variant":"#005236","secondary-container":"#03b5d3"},borderRadius:{"DEFAULT":"0.125rem","lg":"0.25rem","xl":"0.5rem","full":"0.75rem"},spacing:{gutter:"0.75rem","space-sm":"0.25rem","space-lg":"0.75rem","space-xl":"1rem","gutter-md":"1rem","margin":"0.75rem","space-md":"0.5rem","margin-md":"1.25rem","space-xs":"0.125rem"},fontFamily:{"code-sm":["JetBrains Mono"],"body-md":["Inter"],"headline-sm":["Inter"],"label-sm":["JetBrains Mono"],"code-lg":["JetBrains Mono"],"body-lg":["Inter"],"headline-md":["Inter"],"label-md":["JetBrains Mono"],"headline-xl":["Inter"],"headline-xl-mobile":["Inter"],"headline-lg":["Inter"],"body-sm":["Inter"],"code-md":["JetBrains Mono"]},fontSize:{"code-sm":["0.6875rem",{lineHeight:"1rem",letterSpacing:"0.02em",fontWeight:"400"}],"body-md":["0.875rem",{lineHeight:"1.25rem",fontWeight:"400"}],"headline-sm":["1rem",{lineHeight:"1.5rem",letterSpacing:"-0.01em",fontWeight:"600"}],"label-sm":["0.625rem",{lineHeight:"0.875rem",letterSpacing:"0.06em",fontWeight:"600"}],"code-lg":["0.875rem",{lineHeight:"1.25rem",fontWeight:"500"}],"body-lg":["1rem",{lineHeight:"1.5rem",fontWeight:"400"}],"headline-md":["1.25rem",{lineHeight:"1.75rem",letterSpacing:"-0.015em",fontWeight:"600"}],"label-md":["0.75rem",{lineHeight:"1rem",letterSpacing:"0.05em",fontWeight:"500"}],"code-md":["0.8125rem",{lineHeight:"1.25rem",fontWeight:"400"}],"headline-xl":["2rem",{lineHeight:"2.5rem",letterSpacing:"-0.025em",fontWeight:"600"}],"headline-xl-mobile":["1.5rem",{lineHeight:"2rem",letterSpacing:"-0.02em",fontWeight:"600"}],"headline-lg":["1.5rem",{lineHeight:"2rem",letterSpacing:"-0.02em",fontWeight:"600"}],"body-sm":["0.75rem",{lineHeight:"1rem",fontWeight:"400"}]}}}}</script></head>
+<body class="bg-background font-body-md text-on-surface antialiased">
+
+<!-- ===== Pantalla de autenticación ===== -->
+<div id="login-screen" class="fixed inset-0 z-[100] hidden items-center justify-center bg-background/95 backdrop-blur-sm">
+  <div class="bg-surface-container-low border border-surface-container-high rounded-lg w-full max-w-md mx-4 p-6">
+    <div class="flex items-center gap-3 mb-6">
+      <div class="w-10 h-10 rounded bg-primary flex items-center justify-center">
+        <span class="material-symbols-outlined text-on-primary text-[22px]">shield</span>
+      </div>
+      <div>
+        <div class="font-code-lg text-code-lg text-primary uppercase font-bold tracking-tight">ports-tui</div>
+        <div class="font-code-sm text-code-sm text-outline">autenticación requerida</div>
+      </div>
+    </div>
+    <label class="font-label-sm text-label-sm text-outline uppercase tracking-wider block mb-2">Token de la API</label>
+    <input id="token-input" type="password" autocomplete="off" placeholder="ptk_..."
+      class="w-full bg-surface-container border border-surface-container-high px-3 py-2 font-code-sm text-code-sm text-on-surface focus:outline-none focus:border-secondary rounded"/>
+    <div id="login-error" class="hidden mt-3 font-code-sm text-code-sm text-error flex items-center gap-1">
+      <span class="material-symbols-outlined text-[16px]">error</span><span id="login-error-text"></span>
+    </div>
+    <button id="login-btn" class="mt-5 w-full bg-primary text-on-primary font-semibold py-2 rounded hover:opacity-90 transition-opacity">
+      Conectar
+    </button>
+    <p class="mt-4 font-code-sm text-code-sm text-outline-variant leading-relaxed">
+      El token se guarda solo en este navegador (localStorage). Genera uno con
+      <span class="text-secondary">ports-tui token generate</span>.
+    </p>
+  </div>
+</div>
+
+<!-- ===== Cabecera ===== -->
+<header class="fixed top-0 left-0 right-0 z-50 h-14 bg-surface-container-lowest border-b border-surface-container-high px-gutter-md flex items-center justify-between gap-space-lg select-none">
+  <div class="flex items-center gap-space-md shrink-0">
+    <div class="w-9 h-9 rounded bg-primary flex items-center justify-center">
+      <span class="material-symbols-outlined text-on-primary text-[20px]">shield</span>
+    </div>
+    <div class="flex flex-col">
+      <div class="flex items-center gap-space-xs">
+        <span class="font-code-lg text-code-lg text-primary uppercase font-bold tracking-tight">ports-tui</span>
+        <span class="font-code-sm text-code-sm text-outline-variant" id="app-version">v0.1.0</span>
+      </div>
+      <div class="flex items-center gap-space-xs">
+        <span id="conn-dot" class="h-1.5 w-1.5 rounded-full bg-outline"></span>
+        <span id="conn-status" class="font-code-sm text-code-sm text-outline">conectando…</span>
+      </div>
+    </div>
+  </div>
+  <div class="hidden xl:flex items-center gap-space-sm font-code-sm text-code-sm">
+    <div class="flex items-center gap-space-xs bg-surface-container-low px-space-md py-space-xs border border-surface-container-high rounded">
+      <span class="text-outline">HOST</span><span class="text-on-surface font-mono" id="hdr-host">-</span>
+    </div>
+    <div class="flex items-center gap-space-xs bg-surface-container-low px-space-md py-space-xs border border-surface-container-high rounded">
+      <span class="text-outline">FIREWALL</span><span id="hdr-ufw" class="text-outline font-mono">-</span>
+    </div>
+    <div class="flex items-center gap-space-xs bg-surface-container-low px-space-md py-space-xs border border-surface-container-high rounded">
+      <span class="text-outline">EXPUESTOS</span><span id="hdr-exposed" class="text-error font-mono">-</span>
+    </div>
+  </div>
+  <div class="flex items-center gap-space-md shrink-0">
+    <button id="btn-refresh" class="flex items-center gap-space-xs bg-surface-container-low border border-surface-container-high px-space-md py-space-xs font-code-sm text-code-sm text-on-surface hover:bg-surface-container-high transition-colors rounded">
+      <span class="material-symbols-outlined text-outline text-[16px]">refresh</span>Refrescar
+    </button>
+    <button id="btn-open-port" class="flex items-center gap-space-xs bg-primary text-on-primary px-space-md py-space-xs font-code-sm font-bold hover:opacity-90 transition-opacity rounded">
+      <span class="material-symbols-outlined text-[16px]">add</span>Abrir puerto
+    </button>
+    <button id="btn-logout" title="Cerrar sesión" class="w-8 h-8 rounded bg-surface-container-high flex items-center justify-center hover:bg-error-container transition-colors">
+      <span class="material-symbols-outlined text-on-surface text-[18px]">logout</span>
+    </button>
+  </div>
+</header>
+
+<!-- ===== Barra lateral ===== -->
+<aside class="fixed left-0 top-14 bottom-0 w-64 bg-surface-container-lowest border-r border-surface-container-high z-40 flex flex-col justify-between select-none">
+  <div class="flex flex-col py-space-md overflow-y-auto">
+    <div class="px-space-md mb-space-xs"><span class="font-label-sm text-label-sm text-outline uppercase tracking-wider">Firewall</span></div>
+    <nav class="space-y-space-xs px-space-xs">
+      <a data-view="ports" class="nav-link flex items-center justify-between px-space-md py-space-xs rounded transition-colors bg-primary-container text-on-primary-container font-semibold" href="#ports">
+        <div class="flex items-center gap-space-md"><span class="material-symbols-outlined text-[18px]">lan</span><span>Escuchas</span></div>
+        <span id="nav-count-ports" class="font-code-sm text-code-sm bg-surface-container-high px-space-xs py-space-xs rounded text-primary">-</span>
+      </a>
+      <a data-view="rules" class="nav-link flex items-center justify-between px-space-md py-space-xs rounded font-label-md text-label-md text-on-surface-variant hover:bg-surface-container-high hover:text-on-surface transition-colors" href="#rules">
+        <div class="flex items-center gap-space-md"><span class="material-symbols-outlined text-[18px]">rule</span><span>Reglas UFW</span></div>
+        <span id="nav-count-rules" class="font-code-sm text-code-sm bg-surface-container-high px-space-xs py-space-xs rounded text-outline">-</span>
+      </a>
+      <a data-view="status" class="nav-link flex items-center justify-between px-space-md py-space-xs rounded font-label-md text-label-md text-on-surface-variant hover:bg-surface-container-high hover:text-on-surface transition-colors" href="#status">
+        <div class="flex items-center gap-space-md"><span class="material-symbols-outlined text-[18px]">monitor_heart</span><span>Estado</span></div>
+        <span id="nav-count-orphan" class="font-code-sm text-code-sm bg-surface-container-high px-space-xs py-space-xs rounded text-outline">-</span>
+      </a>
+    </nav>
+  </div>
+  <div class="p-space-md border-t border-surface-container-high bg-surface-container-lowest">
+    <div class="flex flex-col gap-space-xs font-code-sm text-code-sm text-outline mb-space-md">
+      <div class="flex justify-between"><span>DAEMON:</span><span id="side-daemon" class="text-primary font-mono">127.0.0.1:9443</span></div>
+      <div class="flex justify-between"><span>BACKEND:</span><span id="side-backend" class="text-on-surface font-mono text-[11px]">-</span></div>
+      <div class="flex justify-between"><span>ACTUALIZADO:</span><span id="side-updated" class="text-on-surface font-mono text-[11px]">-</span></div>
+    </div>
+    <p class="font-code-sm text-code-sm text-outline-variant leading-relaxed">
+      Cada acción sobre las reglas queda registrada en el log de auditoría del daemon.
+    </p>
+  </div>
+</aside>
+
+<!-- ===== Contenido ===== -->
+<div class="pl-64">
+<main class="w-full pt-14 bg-background min-h-screen">
+<div class="flex flex-col w-full">
+
+  <!-- cinta de métricas -->
+  <div class="px-margin-md pt-space-lg pb-space-md">
+    <div class="grid grid-cols-2 md:grid-cols-5 gap-space-md">
+      <div class="bg-surface-container-low p-space-md rounded flex items-center justify-between">
+        <div class="flex flex-col">
+          <span class="font-label-sm text-label-sm text-outline uppercase tracking-wider">Escuchas</span>
+          <div class="flex items-baseline gap-space-xs mt-space-xs">
+            <span id="stat-listeners" class="font-code-lg text-headline-md text-on-surface font-bold">-</span>
+            <span class="font-code-sm text-code-sm text-outline">sockets</span>
+          </div>
+        </div>
+        <div class="w-9 h-9 rounded bg-surface-container flex items-center justify-center text-outline">
+          <span class="material-symbols-outlined text-[20px]">lan</span>
+        </div>
+      </div>
+      <div class="bg-surface-container-low p-space-md rounded flex items-center justify-between relative overflow-hidden">
+        <div class="absolute left-0 top-0 bottom-0 w-1 bg-tertiary"></div>
+        <div class="flex flex-col pl-space-xs">
+          <span class="font-label-sm text-label-sm text-tertiary uppercase font-bold tracking-wider">Públicos</span>
+          <div class="flex items-baseline gap-space-xs mt-space-xs">
+            <span id="stat-public" class="font-code-lg text-headline-md text-tertiary font-bold">-</span>
+            <span class="font-code-sm text-code-sm text-outline">en 0.0.0.0</span>
+          </div>
+        </div>
+        <div class="w-9 h-9 rounded bg-tertiary-container/20 flex items-center justify-center text-tertiary">
+          <span class="material-symbols-outlined text-[20px]">public</span>
+        </div>
+      </div>
+      <div class="bg-surface-container-low p-space-md rounded flex items-center justify-between relative overflow-hidden">
+        <div class="absolute left-0 top-0 bottom-0 w-1 bg-error"></div>
+        <div class="flex flex-col pl-space-xs">
+          <span class="font-label-sm text-label-sm text-error uppercase font-bold tracking-wider">Expuestos</span>
+          <div class="flex items-baseline gap-space-xs mt-space-xs">
+            <span id="stat-exposed" class="font-code-lg text-headline-md text-error font-bold">-</span>
+            <span class="font-code-sm text-code-sm text-outline">accesibles</span>
+          </div>
+        </div>
+        <div class="w-9 h-9 rounded bg-error-container/20 flex items-center justify-center text-error">
+          <span class="material-symbols-outlined text-[20px]">gpp_maybe</span>
+        </div>
+      </div>
+      <div class="bg-surface-container-low p-space-md rounded flex items-center justify-between">
+        <div class="flex flex-col">
+          <span class="font-label-sm text-label-sm text-outline uppercase tracking-wider">Bloqueados</span>
+          <div class="flex items-baseline gap-space-xs mt-space-xs">
+            <span id="stat-blocked" class="font-code-lg text-headline-md text-primary font-bold">-</span>
+            <span class="font-code-sm text-code-sm text-outline">por ufw</span>
+          </div>
+        </div>
+        <div class="w-9 h-9 rounded bg-surface-container flex items-center justify-center text-outline">
+          <span class="material-symbols-outlined text-[20px]">lock</span>
+        </div>
+      </div>
+      <div class="bg-surface-container-low p-space-md rounded flex items-center justify-between">
+        <div class="flex flex-col">
+          <span class="font-label-sm text-label-sm text-outline uppercase tracking-wider">Reglas</span>
+          <div class="flex items-baseline gap-space-xs mt-space-xs">
+            <span id="stat-rules" class="font-code-lg text-headline-md text-on-surface font-bold">-</span>
+            <span id="stat-allow" class="font-code-sm text-code-sm text-primary">-</span>
+          </div>
+        </div>
+        <div class="w-9 h-9 rounded bg-surface-container flex items-center justify-center text-outline">
+          <span class="material-symbols-outlined text-[20px]">rule</span>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ===== Vista: escuchas ===== -->
+  <section id="view-ports" class="px-margin-md pb-margin-md">
+    <div class="bg-surface-container-low border border-surface-container-high rounded overflow-hidden">
+      <div class="px-space-md py-space-md border-b border-surface-container-high flex items-center justify-between">
+        <div class="flex items-center gap-space-md">
+          <span class="material-symbols-outlined text-secondary text-[20px]">lan</span>
+          <h2 class="font-headline-sm text-headline-sm font-semibold">Ports en escucha</h2>
+        </div>
+        <div class="flex items-center gap-space-md">
+          <label class="flex items-center gap-space-xs font-code-sm text-code-sm text-outline cursor-pointer">
+            <input id="filter-risky" type="checkbox" class="accent-primary"/>
+            solo con riesgo
+          </label>
+          <button id="btn-open-port-2" class="flex items-center gap-space-xs bg-primary-container text-on-primary-container px-space-md py-space-xs font-code-sm font-bold rounded hover:opacity-90 transition-opacity">
+            <span class="material-symbols-outlined text-[16px]">add</span>Abrir puerto
+          </button>
+        </div>
+      </div>
+      <div class="overflow-x-auto">
+        <table class="w-full text-left">
+          <thead class="bg-surface-container">
+            <tr class="font-label-sm text-label-sm text-outline uppercase tracking-wider">
+              <th class="px-space-md py-space-xs">Puerto</th>
+              <th class="px-space-md py-space-xs">Proto</th>
+              <th class="px-space-md py-space-xs">Dirección</th>
+              <th class="px-space-md py-space-xs">Proceso</th>
+              <th class="px-space-md py-space-xs">PID</th>
+              <th class="px-space-md py-space-xs">Usuario</th>
+              <th class="px-space-md py-space-xs">Estado</th>
+              <th class="px-space-md py-space-xs">Reglas</th>
+              <th class="px-space-md py-space-xs text-right">Acciones</th>
+            </tr>
+          </thead>
+          <tbody id="ports-body" class="divide-y divide-surface-container-high font-code-sm text-code-sm">
+            <tr><td colspan="9" class="px-space-md py-space-lg text-center text-outline">Cargando…</td></tr>
+          </tbody>
+        </table>
+      </div>
+    </div>
+  </section>
+
+  <!-- ===== Vista: reglas ===== -->
+  <section id="view-rules" class="hidden px-margin-md pb-margin-md">
+    <div class="bg-surface-container-low border border-surface-container-high rounded overflow-hidden">
+      <div class="px-space-md py-space-md border-b border-surface-container-high flex items-center justify-between">
+        <div class="flex items-center gap-space-md">
+          <span class="material-symbols-outlined text-secondary text-[20px]">rule</span>
+          <h2 class="font-headline-sm text-headline-sm font-semibold">Reglas de UFW</h2>
+        </div>
+        <div class="flex items-center gap-space-md">
+          <button id="btn-ufw-toggle" class="flex items-center gap-space-xs bg-surface-container-high border border-surface-container-high px-space-md py-space-xs font-code-sm text-code-sm text-on-surface hover:bg-surface-container-low rounded">
+            <span class="material-symbols-outlined text-[16px]">power_settings_new</span><span id="btn-ufw-toggle-label">Activar / Desactivar ufw</span>
+          </button>
+          <button id="btn-ufw-reload" class="flex items-center gap-space-xs bg-surface-container-high border border-surface-container-high px-space-md py-space-xs font-code-sm text-code-sm text-on-surface hover:bg-surface-container-low rounded">
+            <span class="material-symbols-outlined text-[16px]">cached</span>Recargar
+          </button>
+        </div>
+      </div>
+      <div class="overflow-x-auto">
+        <table class="w-full text-left">
+          <thead class="bg-surface-container">
+            <tr class="font-label-sm text-label-sm text-outline uppercase tracking-wider">
+              <th class="px-space-md py-space-xs">#</th>
+              <th class="px-space-md py-space-xs">Acción</th>
+              <th class="px-space-md py-space-xs">Destino</th>
+              <th class="px-space-md py-space-xs">Origen</th>
+              <th class="px-space-md py-space-xs">Comentario</th>
+              <th class="px-space-md py-space-xs">Estado</th>
+              <th class="px-space-md py-space-xs text-right">Acciones</th>
+            </tr>
+          </thead>
+          <tbody id="rules-body" class="divide-y divide-surface-container-high font-code-sm text-code-sm">
+            <tr><td colspan="7" class="px-space-md py-space-lg text-center text-outline">Cargando…</td></tr>
+          </tbody>
+        </table>
+      </div>
+    </div>
+  </section>
+
+  <!-- ===== Vista: estado ===== -->
+  <section id="view-status" class="hidden px-margin-md pb-margin-md space-y-space-md">
+    <div class="grid grid-cols-1 lg:grid-cols-3 gap-space-md">
+      <div class="bg-surface-container-low border border-surface-container-high rounded p-space-md">
+        <div class="flex items-center gap-space-md mb-space-md">
+          <span class="material-symbols-outlined text-secondary text-[20px]">info</span>
+          <h2 class="font-headline-sm text-headline-sm font-semibold">Firewall</h2>
+        </div>
+        <dl class="space-y-space-xs font-code-sm text-code-sm">
+          <div class="flex justify-between"><dt class="text-outline">ESTADO</dt><dd id="st-ufw-active" class="text-on-surface">-</dd></div>
+          <div class="flex justify-between"><dt class="text-outline">LOGGING</dt><dd id="st-ufw-logging" class="text-on-surface">-</dd></div>
+          <div class="flex justify-between"><dt class="text-outline">ENTRADA</dt><dd id="st-ufw-in" class="text-tertiary">-</dd></div>
+          <div class="flex justify-between"><dt class="text-outline">SALIDA</dt><dd id="st-ufw-out" class="text-on-surface">-</dd></div>
+          <div class="flex justify-between"><dt class="text-outline">BACKEND</dt><dd id="st-backend" class="text-on-surface">-</dd></div>
+        </dl>
+      </div>
+      <div class="bg-surface-container-low border border-surface-container-high rounded p-space-md">
+        <div class="flex items-center gap-space-md mb-space-md">
+          <span class="material-symbols-outlined text-tertiary text-[20px]">rule_folder</span>
+          <h2 class="font-headline-sm text-headline-sm font-semibold">Reglas sin proceso</h2>
+        </div>
+        <div id="orphan-list" class="space-y-space-xs font-code-sm text-code-sm">
+          <p class="text-outline">-</p>
+        </div>
+      </div>
+      <div class="bg-surface-container-low border border-surface-container-high rounded p-space-md">
+        <div class="flex items-center gap-space-md mb-space-md">
+          <span class="material-symbols-outlined text-secondary text-[20px]">history</span>
+          <h2 class="font-headline-sm text-headline-sm font-semibold">Auditoría</h2>
+        </div>
+        <div id="audit-list" class="space-y-space-xs font-code-sm text-code-sm max-h-64 overflow-y-auto">
+          <p class="text-outline">-</p>
+        </div>
+      </div>
+    </div>
+  </section>
+
+</div>
+</main>
+</div>
+
+<!-- ===== Modal de regla ===== -->
+<div id="rule-modal" class="fixed inset-0 z-[90] hidden items-center justify-center bg-background/80 backdrop-blur-sm">
+  <div class="bg-surface-container-low border border-surface-container-high rounded-lg w-full max-w-lg mx-4">
+    <div class="px-space-md py-space-md border-b border-surface-container-high flex items-center justify-between">
+      <h3 class="font-headline-sm text-headline-sm font-semibold" id="rule-modal-title">Abrir puerto</h3>
+      <button id="btn-modal-close" class="text-outline hover:text-on-surface"><span class="material-symbols-outlined">close</span></button>
+    </div>
+    <div class="p-space-md space-y-space-md">
+      <div class="grid grid-cols-2 gap-space-md">
+        <div>
+          <label class="font-label-sm text-label-sm text-outline uppercase tracking-wider block mb-2">Puerto</label>
+          <input id="rule-port" type="text" placeholder="22" class="w-full bg-surface-container border border-surface-container-high px-3 py-2 font-code-sm text-code-sm text-on-surface focus:outline-none focus:border-secondary rounded"/>
+        </div>
+        <div>
+          <label class="font-label-sm text-label-sm text-outline uppercase tracking-wider block mb-2">Protocolo</label>
+          <select id="rule-proto" class="w-full bg-surface-container border border-surface-container-high px-3 py-2 font-code-sm text-code-sm text-on-surface focus:outline-none focus:border-secondary rounded">
+            <option value="tcp">tcp</option>
+            <option value="udp">udp</option>
+            <option value="any">tcp/udp</option>
+          </select>
+        </div>
+      </div>
+      <div>
+        <label class="font-label-sm text-label-sm text-outline uppercase tracking-wider block mb-2">Origen</label>
+        <input id="rule-from" type="text" value="any" placeholder="any o 192.168.1.0/24" class="w-full bg-surface-container border border-surface-container-high px-3 py-2 font-code-sm text-code-sm text-on-surface focus:outline-none focus:border-secondary rounded"/>
+      </div>
+      <div>
+        <label class="font-label-sm text-label-sm text-outline uppercase tracking-wider block mb-2">Comentario</label>
+        <input id="rule-comment" type="text" placeholder="opcional" class="w-full bg-surface-container border border-surface-container-high px-3 py-2 font-code-sm text-code-sm text-on-surface focus:outline-none focus:border-secondary rounded"/>
+      </div>
+      <div>
+        <label class="font-label-sm text-label-sm text-outline uppercase tracking-wider block mb-2">Acción</label>
+        <select id="rule-action" class="w-full bg-surface-container border border-surface-container-high px-3 py-2 font-code-sm text-code-sm text-on-surface focus:outline-none focus:border-secondary rounded">
+          <option value="allow">permitir (ALLOW)</option>
+          <option value="deny">bloquear (DENY)</option>
+          <option value="reject">rechazar (REJECT)</option>
+          <option value="limit">limitar (LIMIT)</option>
+        </select>
+      </div>
+      <div id="rule-error" class="hidden font-code-sm text-code-sm text-error flex items-center gap-1">
+        <span class="material-symbols-outlined text-[16px]">error</span><span id="rule-error-text"></span>
+      </div>
+    </div>
+    <div class="px-space-md py-space-md border-t border-surface-container-high flex justify-end gap-space-md">
+      <button id="btn-modal-cancel" class="px-space-md py-2 font-code-sm text-code-sm text-on-surface bg-surface-container-high rounded hover:bg-surface-container-low">Cancelar</button>
+      <button id="btn-modal-submit" class="px-space-md py-2 font-code-sm text-code-sm font-bold bg-primary text-on-primary rounded hover:opacity-90">Aplicar</button>
+    </div>
+  </div>
+</div>
+
+<div id="toast" class="fixed bottom-6 right-6 z-[110] hidden px-space-md py-space-md bg-surface-container-high border border-surface-container-high rounded font-code-sm text-code-sm text-on-surface shadow-lg"></div>
+
+<script>
+const TOKEN_KEY = "ports-tui-token";
+let currentView = "ports";
+let snapshot = null;
+let onlyRisky = false;
+
+const $ = (id) => document.getElementById(id);
+
+function token() { return localStorage.getItem(TOKEN_KEY) || ""; }
+
+function toast(message, isError) {
+  const el = $("toast");
+  el.textContent = message;
+  el.className = "fixed bottom-6 right-6 z-[110] px-space-md py-space-md bg-surface-container-high border rounded font-code-sm text-code-sm shadow-lg " +
+    (isError ? "text-error border-error" : "text-on-surface border-surface-container-high");
+  el.classList.remove("hidden");
+  clearTimeout(el._t);
+  el._t = setTimeout(() => el.classList.add("hidden"), 4000);
+}
+
+function showLogin(message) {
+  $("login-screen").classList.remove("hidden");
+  $("login-screen").classList.add("flex");
+  if (message) {
+    $("login-error").classList.remove("hidden");
+    $("login-error-text").textContent = message;
+  }
+  $("token-input").focus();
+}
+
+function hideLogin() {
+  $("login-screen").classList.add("hidden");
+  $("login-screen").classList.remove("flex");
+}
+
+async function api(path, options = {}) {
+  const opts = Object.assign({ headers: {} }, options);
+  opts.headers = Object.assign({ "Authorization": "Bearer " + token() }, opts.headers);
+  if (opts.body) {
+    opts.headers["Content-Type"] = "application/json";
+    opts.body = JSON.stringify(opts.body);
+  }
+  const resp = await fetch(path, opts);
+  if (resp.status === 401) {
+    showLogin("Token inválido o vencido.");
+    throw new Error("unauthorized");
+  }
+  const text = await resp.text();
+  let data = null;
+  try { data = text ? JSON.parse(text) : null; } catch (e) { data = null; }
+  if (!resp.ok) {
+    throw new Error((data && data.error) || ("HTTP " + resp.status));
+  }
+  return data;
+}
+
+async function refresh() {
+  try {
+    const data = await api("/api/v1/snapshot");
+    snapshot = data;
+    hideLogin();
+    render();
+    $("conn-dot").className = "h-1.5 w-1.5 rounded-full bg-primary animate-pulse";
+    $("conn-status").textContent = "daemon conectado";
+    $("conn-status").className = "font-code-sm text-code-sm text-outline";
+  } catch (err) {
+    if (err.message !== "unauthorized") {
+      $("conn-dot").className = "h-1.5 w-1.5 rounded-full bg-error";
+      $("conn-status").textContent = "sin conexión con el daemon";
+      $("conn-status").className = "font-code-sm text-code-sm text-error";
+      toast(err.message, true);
+    }
+  }
+}
+
+function severityBadge(state, severity) {
+  const map = {
+    "expuesto": "text-error",
+    "permitido_por_defecto": "text-error",
+    "restringido": "text-tertiary",
+    "bloqueado": "text-primary",
+    "bloqueado_por_defecto": "text-primary",
+    "sin_firewall": "text-tertiary",
+    "local": "text-outline"
+  };
+  const cls = map[state] || "text-outline";
+  const icon = {
+    "expuesto": "gpp_maybe",
+    "permitido_por_defecto": "gpp_maybe",
+    "restringido": "lock_open",
+    "bloqueado": "lock",
+    "bloqueado_por_defecto": "shield",
+    "sin_firewall": "warning",
+    "local": "radio_button_unchecked"
+  }[state] || "info";
+  return `<span class="inline-flex items-center gap-1 ${cls}"><span class="material-symbols-outlined text-[14px]">${icon}</span>${state}</span>`;
+}
+
+function renderPorts() {
+  const body = $("ports-body");
+  if (!snapshot) return;
+  let items = snapshot.exposure || [];
+  if (onlyRisky) items = items.filter((i) => i.severity !== "seguro");
+  items = items.slice().sort((a, b) => {
+    const rank = { "critico": 0, "alto": 1, "medio": 2, "bajo": 3, "seguro": 4 };
+    const d = (rank[a.severity] ?? 5) - (rank[b.severity] ?? 5);
+    return d !== 0 ? d : a.listener.port - b.listener.port;
+  });
+
+  if (!items.length) {
+    body.innerHTML = `<tr><td colspan="9" class="px-space-md py-space-lg text-center text-outline">No hay puertos que coincidan con el filtro</td></tr>`;
+    return;
+  }
+
+  body.innerHTML = items.map((item) => {
+    const l = item.listener;
+    const rules = (item.rules || []).map((n) => "#" + n).join(" ") || "-";
+    const detail = `<div class="text-outline-variant text-[11px] mt-0.5">${item.detail || ""}</div>`;
+    return `<tr class="hover:bg-surface-container">
+      <td class="px-space-md py-space-xs text-on-surface font-bold">${l.port}</td>
+      <td class="px-space-md py-space-xs text-secondary uppercase">${l.proto}</td>
+      <td class="px-space-md py-space-xs text-on-surface">${l.local_ip}:${l.port}<div class="text-outline-variant text-[11px]">${l.bind === "all" ? "todas las interfaces" : l.bind}</div></td>
+      <td class="px-space-md py-space-xs text-on-surface">${l.process || "-"}<div class="text-outline-variant text-[11px] truncate max-w-[220px]">${(l.cmdline || "").slice(0, 60)}</div></td>
+      <td class="px-space-md py-space-xs text-outline">${l.pid || "-"}</td>
+      <td class="px-space-md py-space-xs text-outline">${l.user || "-"}</td>
+      <td class="px-space-md py-space-xs">${severityBadge(item.state, item.severity)}${detail}</td>
+      <td class="px-space-md py-space-xs text-outline">${rules}</td>
+      <td class="px-space-md py-space-xs text-right whitespace-nowrap">
+        <button class="btn-allow text-primary hover:underline" data-port="${l.port}" data-proto="${l.proto}">abrir</button>
+        <span class="text-outline-variant mx-1">|</span>
+        <button class="btn-deny text-error hover:underline" data-port="${l.port}" data-proto="${l.proto}">cerrar</button>
+      </td>
+    </tr>`;
+  }).join("");
+
+  body.querySelectorAll(".btn-allow").forEach((b) => b.addEventListener("click", () => {
+    openModal("allow", b.dataset.port, b.dataset.proto);
+  }));
+  body.querySelectorAll(".btn-deny").forEach((b) => b.addEventListener("click", () => {
+    openModal("deny", b.dataset.port, b.dataset.proto);
+  }));
+}
+
+function renderRules() {
+  const body = $("rules-body");
+  if (!snapshot) return;
+  const rules = snapshot.rules || [];
+  if (!rules.length) {
+    body.innerHTML = `<tr><td colspan="7" class="px-space-md py-space-lg text-center text-outline">No hay reglas definidas</td></tr>`;
+    return;
+  }
+  body.innerHTML = rules.map((r) => {
+    const actionCls = r.action === "ALLOW" ? "text-primary" : (r.action === "LIMIT" ? "text-tertiary" : "text-error");
+    const enabled = r.enabled !== false;
+    return `<tr class="hover:bg-surface-container">
+      <td class="px-space-md py-space-xs text-outline">${r.number}</td>
+      <td class="px-space-md py-space-xs ${actionCls} font-bold">${r.action}</td>
+      <td class="px-space-md py-space-xs text-on-surface">${formatTarget(r)}</td>
+      <td class="px-space-md py-space-xs text-outline">${r.source || "-"}</td>
+      <td class="px-space-md py-space-xs text-outline-variant">${r.comment || "-"}</td>
+      <td class="px-space-md py-space-xs">${enabled ? '<span class="text-primary">activa</span>' : '<span class="text-outline">deshabilitada</span>'}</td>
+      <td class="px-space-md py-space-xs text-right whitespace-nowrap">
+        <button class="btn-toggle text-secondary hover:underline" data-num="${r.number}" data-enable="${enabled ? "1" : "0"}">${enabled ? "deshabilitar" : "habilitar"}</button>
+        <span class="text-outline-variant mx-1">|</span>
+        <button class="btn-del text-error hover:underline" data-num="${r.number}">eliminar</button>
+      </td>
+    </tr>`;
+  }).join("");
+
+  body.querySelectorAll(".btn-del").forEach((b) => b.addEventListener("click", async () => {
+    if (!confirm("¿Eliminar la regla #" + b.dataset.num + "?")) return;
+    try {
+      await api("/api/v1/rules/" + b.dataset.num, { method: "DELETE" });
+      toast("Regla #" + b.dataset.num + " eliminada");
+      refresh();
+    } catch (err) { toast(err.message, true); }
+  }));
+  body.querySelectorAll(".btn-toggle").forEach((b) => b.addEventListener("click", async () => {
+    const action = b.dataset.enable === "1" ? "disable" : "enable";
+    try {
+      await api("/api/v1/rules/" + b.dataset.num + "/" + action, { method: "POST" });
+      toast("Regla #" + b.dataset.num + " actualizada");
+      refresh();
+    } catch (err) { toast(err.message, true); }
+  }));
+}
+
+function formatTarget(r) {
+  const t = r.target || {};
+  let port = t.port || "any";
+  if (t.proto && t.proto !== "any") port += "/" + t.proto;
+  const addr = t.address;
+  if (addr && addr !== "any" && addr !== "Anywhere" && !addr.startsWith("Anywhere (v6")) {
+    return addr + " " + port;
+  }
+  return port;
+}
+
+function renderStatus() {
+  if (!snapshot) return;
+  const ufw = snapshot.ufw || {};
+  $("st-ufw-active").textContent = ufw.active ? "activo" : "inactivo";
+  $("st-ufw-active").className = ufw.active ? "text-primary" : "text-error";
+  $("st-ufw-logging").textContent = ufw.logging || "-";
+  $("st-ufw-in").textContent = ufw.default_incoming || "-";
+  $("st-ufw-out").textContent = ufw.default_outgoing || "-";
+  $("st-backend").textContent = snapshot.backend || "-";
+
+  const orphans = snapshot.orphan_rules || [];
+  const orphanList = $("orphan-list");
+  if (!orphans.length) {
+    orphanList.innerHTML = '<p class="text-primary">Todas las reglas abiertas tienen proceso escuchando</p>';
+  } else {
+    orphanList.innerHTML = orphans.map((o) =>
+      `<div class="flex items-start gap-2"><span class="material-symbols-outlined text-tertiary text-[16px]">warning</span>
+       <div><div class="text-on-surface">#${o.rule.number} ${formatTarget(o.rule)}</div>
+       <div class="text-outline-variant text-[11px]">${o.reason}${o.rule.comment ? " · " + o.rule.comment : ""}</div></div></div>`).join("");
+  }
+}
+
+async function renderAudit() {
+  try {
+    const data = await api("/api/v1/audit?limit=20");
+    const entries = (data && data.entries) || [];
+    const list = $("audit-list");
+    if (!entries.length) { list.innerHTML = '<p class="text-outline">Sin acciones registradas</p>'; return; }
+    list.innerHTML = entries.map((e) => {
+      const ok = e.result === "ok";
+      const when = new Date(e.timestamp).toLocaleTimeString();
+      return `<div class="flex items-start gap-2">
+        <span class="material-symbols-outlined text-[14px] ${ok ? "text-primary" : "text-error"}">${ok ? "check_circle" : "error"}</span>
+        <div class="flex-1">
+          <div class="text-on-surface">${e.action} ${e.target ? "· " + e.target : ""}</div>
+          <div class="text-outline-variant text-[11px]">${when} · ${e.remote_addr || "-"}</div>
+          ${e.detail ? `<div class="text-error text-[11px]">${e.detail}</div>` : ""}
+        </div></div>`;
+    }).join("");
+  } catch (err) { /* silencioso */ }
+}
+
+function render() {
+  if (!snapshot) return;
+  const s = snapshot.summary || {};
+  $("stat-listeners").textContent = s.total_listeners ?? "-";
+  $("stat-public").textContent = s.public_listeners ?? "-";
+  $("stat-exposed").textContent = s.exposed_ports ?? "-";
+  $("stat-blocked").textContent = s.blocked_ports ?? "-";
+  $("stat-rules").textContent = s.total_rules ?? "-";
+  $("stat-allow").textContent = `${s.allow_rules ?? 0} allow · ${s.deny_rules ?? 0} deny`;
+  $("hdr-host").textContent = snapshot.hostname || "-";
+  $("hdr-exposed").textContent = s.exposed_ports ?? "-";
+  $("hdr-ufw").textContent = snapshot.ufw && snapshot.ufw.active ? "activo" : "inactivo";
+  $("hdr-ufw").className = (snapshot.ufw && snapshot.ufw.active ? "text-primary" : "text-error") + " font-mono";
+  $("nav-count-ports").textContent = s.total_listeners ?? "-";
+  $("nav-count-rules").textContent = s.total_rules ?? "-";
+  $("nav-count-orphan").textContent = (snapshot.orphan_rules || []).length;
+  $("side-backend").textContent = snapshot.backend || "-";
+  $("side-updated").textContent = new Date(snapshot.generated_at).toLocaleTimeString();
+
+  renderPorts();
+  renderRules();
+  renderStatus();
+  renderAudit();
+}
+
+function openModal(action, port, proto) {
+  $("rule-modal-title").textContent = action === "deny" ? "Cerrar puerto" : "Abrir puerto";
+  $("rule-action").value = action;
+  $("rule-port").value = port || "";
+  $("rule-proto").value = proto || "tcp";
+  $("rule-from").value = "any";
+  $("rule-comment").value = "";
+  $("rule-error").classList.add("hidden");
+  $("rule-modal").classList.remove("hidden");
+  $("rule-modal").classList.add("flex");
+  $("rule-port").focus();
+}
+
+function closeModal() {
+  $("rule-modal").classList.add("hidden");
+  $("rule-modal").classList.remove("flex");
+}
+
+function switchView(view) {
+  currentView = view;
+  ["ports", "rules", "status"].forEach((v) => {
+    $("view-" + v).classList.toggle("hidden", v !== view);
+  });
+  document.querySelectorAll(".nav-link").forEach((a) => {
+    const active = a.dataset.view === view;
+    a.className = "nav-link flex items-center justify-between px-space-md py-space-xs rounded transition-colors " +
+      (active ? "bg-primary-container text-on-primary-container font-semibold" : "font-label-md text-label-md text-on-surface-variant hover:bg-surface-container-high hover:text-on-surface");
+  });
+  if (view === "status") renderAudit();
+}
+
+document.querySelectorAll(".nav-link").forEach((a) => {
+  a.addEventListener("click", (e) => { e.preventDefault(); switchView(a.dataset.view); });
+});
+
+$("btn-refresh").addEventListener("click", refresh);
+$("btn-open-port").addEventListener("click", () => openModal("allow"));
+$("btn-open-port-2").addEventListener("click", () => openModal("allow"));
+$("btn-modal-close").addEventListener("click", closeModal);
+$("btn-modal-cancel").addEventListener("click", closeModal);
+$("filter-risky").addEventListener("change", (e) => { onlyRisky = e.target.checked; renderPorts(); });
+
+$("btn-modal-submit").addEventListener("click", async () => {
+  const body = {
+    port: $("rule-port").value.trim(),
+    proto: $("rule-proto").value,
+    from: $("rule-from").value.trim() || "any",
+    action: $("rule-action").value,
+    comment: $("rule-comment").value.trim()
+  };
+  try {
+    await api("/api/v1/rules", { method: "POST", body });
+    closeModal();
+    toast("Regla aplicada: " + body.action + " " + body.port + "/" + body.proto);
+    refresh();
+  } catch (err) {
+    $("rule-error").classList.remove("hidden");
+    $("rule-error-text").textContent = err.message;
+  }
+});
+
+$("btn-ufw-toggle").addEventListener("click", async () => {
+  const active = snapshot && snapshot.ufw && snapshot.ufw.active;
+  const action = active ? "disable" : "enable";
+  if (action === "disable" && !confirm("¿Desactivar el firewall? Todos los puertos quedan accesibles.")) return;
+  try {
+    await api("/api/v1/ufw/" + action, { method: "POST" });
+    toast("Firewall " + (action === "enable" ? "activado" : "desactivado"));
+    refresh();
+  } catch (err) { toast(err.message, true); }
+});
+
+$("btn-ufw-reload").addEventListener("click", async () => {
+  try {
+    await api("/api/v1/ufw/reload", { method: "POST" });
+    toast("Reglas recargadas");
+    refresh();
+  } catch (err) { toast(err.message, true); }
+});
+
+$("btn-logout").addEventListener("click", () => {
+  localStorage.removeItem(TOKEN_KEY);
+  showLogin("Sesión cerrada. Introduce el token para volver.");
+});
+
+$("login-btn").addEventListener("click", async () => {
+  const value = $("token-input").value.trim();
+  if (!value) return;
+  localStorage.setItem(TOKEN_KEY, value);
+  $("login-error").classList.add("hidden");
+  try {
+    await api("/api/v1/health");
+    hideLogin();
+    refresh();
+  } catch (err) {
+    localStorage.removeItem(TOKEN_KEY);
+    $("login-error").classList.remove("hidden");
+    $("login-error-text").textContent = err.message === "unauthorized" ? "Token inválido" : err.message;
+  }
+});
+
+$("token-input").addEventListener("keydown", (e) => { if (e.key === "Enter") $("login-btn").click(); });
+
+if (!token()) {
+  showLogin("Introduce el token de la API para continuar.");
+} else {
+  refresh();
+}
+setInterval(refresh, 5000);
+</script>
+</body></html>

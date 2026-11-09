@@ -1,0 +1,17 @@
+# Binarios
+/bin/
+/ports-tui
+*.exe
+*.test
+*.out
+
+# IDE
+.vscode/
+.idea/
+*.swp
+
+# OS
+.DS_Store
+
+# Config local de pruebas
+*.local.json
